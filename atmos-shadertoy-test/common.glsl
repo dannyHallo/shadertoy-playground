@@ -25,13 +25,12 @@ const float kMieAbsorptionBase = 4.4;
 
 const vec3 kOzoneAbsorptionBase = vec3(0.650, 1.881, .085);
 
-float _getSunAltitude(vec2 iMouse, vec2 iResolution) {
-  float mouse01 = iMouse.y / iResolution.y;
-  return (mouse01 * 2.0 - 1.0) * PI;
+float _getSunAltitude(float sunPos, vec2 iResolution) {
+  return (sunPos * 2.0 - 1.0) * PI;
 }
 
-vec3 getSunDir(vec2 iMouse, vec2 iResolution) {
-  float altitude = _getSunAltitude(iMouse, iResolution);
+vec3 getSunDir(float sunPos, vec2 iResolution) {
+  float altitude = _getSunAltitude(sunPos, iResolution);
   return normalize(vec3(0.0, sin(altitude), -cos(altitude)));
 }
 

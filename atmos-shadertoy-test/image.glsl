@@ -1,3 +1,5 @@
+#iUniform float uSunPos = 0.5 in{0.0, 1.0 }
+
 #include "common.glsl"
 
 #iChannel0 "./bufferA.glsl"
@@ -83,7 +85,7 @@ vec3 sunWithBloom(vec3 rayDir, vec3 sunDir) {
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-  vec3 sunDir = getSunDir(iMouse.xy, iResolution.xy);
+  vec3 sunDir = getSunDir(iMouse.x / iResolution.x, iResolution.xy);
 
   vec3 camDir = normalize(vec3(0.0, 0.27, -1.0));
   float camFOVWidth = PI / 3.5;

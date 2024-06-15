@@ -86,7 +86,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
                      -cosAltitude * cos(azimuthAngle));
 
   float sunAltitude =
-      (0.5 * PI) - acos(dot(getSunDir(iMouse.xy, iResolution.xy), up));
+      (0.5 * PI) -
+      acos(dot(getSunDir(iMouse.x / iResolution.x, iResolution.xy), up));
   vec3 sunDir = vec3(0.0, sin(sunAltitude), -cos(sunAltitude));
 
   float atmoDist = rayIntersectSphere(kViewPos, rayDir, kAtmosphereRadiusMM);
