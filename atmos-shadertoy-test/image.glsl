@@ -1,5 +1,3 @@
-#iUniform float uSunPos = 0.5 in{0.0, 1.0 }
-
 #include "common.glsl"
 
 #iChannel0 "./bufferA.glsl"

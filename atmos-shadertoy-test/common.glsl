@@ -1,22 +1,20 @@
 
 const float PI = 3.14159265358;
 
-// Units are in megameters.
+// units are in megameters.
 const float kGroundRadiusMM = 6.36;
 const float kAtmosphereRadiusMM = 6.46;
 
-// 200M above the ground.
+// 200m above the ground.
 const vec3 kViewPos = vec3(0.0, kGroundRadiusMM + 0.0002, 0.0);
 
 const vec2 kTLutRes = vec2(256.0, 64.0);
-const vec2 kMsLutRes = vec2(32.0, 32.0);
-// Doubled the vertical skyLUT res from the paper, looks way
-// better for sunrise.
-const vec2 kSkyLutRes = vec2(200.0, 200.0);
+const vec2 kMsLutRes = vec2(32.0);
+const vec2 kSkyLutRes = vec2(200.0);
 
 const vec3 kGroundAlbedo = vec3(0.3);
 
-// These are per megameter.
+// these are per megameter.
 const vec3 kRayleighScatteringBase = vec3(5.802, 13.558, 33.1);
 const float kRayleighAbsorptionBase = 0.0;
 
