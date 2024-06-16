@@ -2,11 +2,11 @@
 const float PI = 3.14159265358;
 
 // units are in megameters.
-const float kGroundRadiusMM = 6.36;
-const float kAtmosphereRadiusMM = 6.46;
+const float kGroundRadiusMm = 6.36;
+const float kAtmosphereRadiusMm = 6.46;
 
 // 200m above the ground.
-const vec3 kViewPos = vec3(0.0, kGroundRadiusMM + 0.0002, 0.0);
+const vec3 kViewPos = vec3(0.0, kGroundRadiusMm + 0.0002, 0.0);
 
 const vec2 kTLutRes = vec2(256.0, 64.0);
 const vec2 kMsLutRes = vec2(32.0);
@@ -49,7 +49,7 @@ float getRayleighPhase(float cosTheta) {
 
 void getScatteringValues(vec3 pos, out vec3 rayleighScattering,
                          out float mieScattering, out vec3 extinction) {
-  float altitudeKM = (length(pos) - kGroundRadiusMM) * 1000.0;
+  float altitudeKM = (length(pos) - kGroundRadiusMm) * 1000.0;
 
   float rayleighDensity = exp(-altitudeKM * 0.125);
   float mieDensity = exp(-altitudeKM * 0.833);
@@ -104,8 +104,8 @@ vec3 getValFromTLUT(sampler2D tex, vec2 bufferRes, vec3 pos, vec3 sunDir) {
   vec2 uv =
       vec2(kTLutRes.x * clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
            kTLutRes.y *
-               max(0.0, min(1.0, (height - kGroundRadiusMM) /
-                                     (kAtmosphereRadiusMM - kGroundRadiusMM))));
+               max(0.0, min(1.0, (height - kGroundRadiusMm) /
+                                     (kAtmosphereRadiusMm - kGroundRadiusMm))));
   uv /= bufferRes;
   return texture(tex, uv).rgb;
 }
@@ -118,8 +118,8 @@ vec3 getValFromMultiScattLUT(sampler2D tex, vec2 bufferRes, vec3 pos,
   vec2 uv =
       vec2(kMsLutRes.x * clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
            kMsLutRes.y *
-               max(0.0, min(1.0, (height - kGroundRadiusMM) /
-                                     (kAtmosphereRadiusMM - kGroundRadiusMM))));
+               max(0.0, min(1.0, (height - kGroundRadiusMm) /
+                                     (kAtmosphereRadiusMm - kGroundRadiusMm))));
   uv /= bufferRes;
   return texture(tex, uv).rgb;
 }

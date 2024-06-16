@@ -53,23 +53,21 @@ vec3 raymarchScattering(vec3 pos, vec3 rayDir, vec3 sunDir, float tMax,
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-  if (fragCoord.x >= (kSkyLutRes.x + 1.5) ||
-      fragCoord.y >= (kSkyLutRes.y + 1.5)) {
+  if (any(greaterThanEqual(fragCoord.xy, kSkyLutRes.xy))) {
     return;
   }
 
-  float u = clamp(fragCoord.x, 0.0, kSkyLutRes.x - 1.0) / kSkyLutRes.x;
-  float v = clamp(fragCoord.y, 0.0, kSkyLutRes.y - 1.0) / kSkyLutRes.y;
+  vec2 uv = fragCoord / kSkyLutRes;
 
-  float azimuthAngle = ((u * 2.0) - 1.0) * PI;
+  float azimuthAngle = ((uv.x * 2.0) - 1.0) * PI;
 
   // Non-linear mapping of altitude. See Section 5.3 of the paper.
   float adjV;
-  if (v < 0.5) {
-    float coord = 1.0 - 2.0 * v;
+  if (uv.y < 0.5) {
+    float coord = 1.0 - 2.0 * uv.y;
     adjV = -coord * coord;
   } else {
-    float coord = v * 2.0 - 1.0;
+    float coord = uv.y * 2.0 - 1.0;
     adjV = coord * coord;
   }
 
@@ -78,7 +76,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 
   // float horizonAngle = safeacos(sqrt(height * height - groundRadiusMM *
   // groundRadiusMM) / height) - 0.5*PI;
-  float horizonAngle = asin(kGroundRadiusMM / height) - 0.5 * PI;
+  float horizonAngle = asin(kGroundRadiusMm / height) - 0.5 * PI;
   float altitudeAngle = adjV * 0.5 * PI - horizonAngle;
 
   float cosAltitude = cos(altitudeAngle);
@@ -90,8 +88,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
       acos(dot(getSunDir(iMouse.x / iResolution.x, iResolution.xy), up));
   vec3 sunDir = vec3(0.0, sin(sunAltitude), -cos(sunAltitude));
 
-  float atmoDist = rayIntersectSphere(kViewPos, rayDir, kAtmosphereRadiusMM);
-  float groundDist = rayIntersectSphere(kViewPos, rayDir, kGroundRadiusMM);
+  float atmoDist = rayIntersectSphere(kViewPos, rayDir, kAtmosphereRadiusMm);
+  float groundDist = rayIntersectSphere(kViewPos, rayDir, kGroundRadiusMm);
   float tMax = (groundDist < 0.0) ? atmoDist : groundDist;
   vec3 lum = raymarchScattering(kViewPos, rayDir, sunDir, tMax,
                                 float(numScatteringSteps));

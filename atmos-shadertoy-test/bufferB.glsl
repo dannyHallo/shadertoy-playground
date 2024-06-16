@@ -30,8 +30,8 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fms) {
       float phi = safeacos(1.0 - 2.0 * (float(j) + 0.5) / float(sqrtSamples));
       vec3 rayDir = getSphericalDir(theta, phi);
 
-      float atmoDist = rayIntersectSphere(pos, rayDir, kAtmosphereRadiusMM);
-      float groundDist = rayIntersectSphere(pos, rayDir, kGroundRadiusMM);
+      float atmoDist = rayIntersectSphere(pos, rayDir, kAtmosphereRadiusMm);
+      float groundDist = rayIntersectSphere(pos, rayDir, kGroundRadiusMm);
       float tMax = atmoDist;
       if (groundDist > 0.0) {
         tMax = groundDist;
@@ -86,7 +86,7 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fms) {
       if (groundDist > 0.0) {
         vec3 hitPos = pos + groundDist * rayDir;
         if (dot(pos, sunDir) > 0.0) {
-          hitPos = normalize(hitPos) * kGroundRadiusMM;
+          hitPos = normalize(hitPos) * kGroundRadiusMm;
           lum += transmittance * kGroundAlbedo *
                  getValFromTLUT(iChannel0, iChannelResolution[0].xy, hitPos,
                                 sunDir);
@@ -100,17 +100,14 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fms) {
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-  if (fragCoord.x >= (kMsLutRes.x + 1.5) ||
-      fragCoord.y >= (kMsLutRes.y + 1.5)) {
+  if (any(greaterThanEqual(fragCoord.xy, kMsLutRes.xy))) {
     return;
   }
+  vec2 uv = fragCoord / kMsLutRes;
 
-  float u = clamp(fragCoord.x, 0.0, kMsLutRes.x - 1.0) / kMsLutRes.x;
-  float v = clamp(fragCoord.y, 0.0, kMsLutRes.y - 1.0) / kMsLutRes.y;
-
-  float sunCosTheta = 2.0 * u - 1.0;
+  float sunCosTheta = 2.0 * uv.x - 1.0;
   float sunTheta = safeacos(sunCosTheta);
-  float height = mix(kGroundRadiusMM, kAtmosphereRadiusMM, v);
+  float height = mix(kGroundRadiusMm, kAtmosphereRadiusMm, uv.y);
 
   vec3 pos = vec3(0.0, height, 0.0);
   vec3 sunDir = normalize(vec3(0.0, sunCosTheta, -sin(sunTheta)));

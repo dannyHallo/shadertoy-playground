@@ -1,3 +1,6 @@
+#include "./core/debug.glsl"
+#include "./core/postprocessing.glsl"
+
 #include "common.glsl"
 
 #iChannel0 "./bufferA.glsl"
@@ -34,7 +37,7 @@ vec3 getValFromSkyLUT(vec3 rayDir, vec3 sunDir) {
   vec3 up = kViewPos / height;
 
   float horizonAngle = safeacos(
-      sqrt(height * height - kGroundRadiusMM * kGroundRadiusMM) / height);
+      sqrt(height * height - kGroundRadiusMm * kGroundRadiusMm) / height);
   float altitudeAngle =
       horizonAngle - acos(dot(rayDir, up)); // Between -PI/2 and PI/2
   float azimuthAngle;                       // Between 0 and 2*PI
@@ -99,12 +102,12 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 
   vec3 lum = getValFromSkyLUT(rayDir, sunDir);
 
-  // Bloom should be added at the end, but this is subtle and works well.
+  // bloom should be added at the end, but this is subtle and works well.
   vec3 sunLum = sunWithBloom(rayDir, sunDir);
-  // Use smoothstep to limit the effect, so it drops off to actual zero.
+  // use smoothstep to limit the effect, so it drops off to actual zero.
   sunLum = smoothstep(0.002, 1.0, sunLum);
   if (length(sunLum) > 0.0) {
-    if (rayIntersectSphere(kViewPos, rayDir, kGroundRadiusMM) >= 0.0) {
+    if (rayIntersectSphere(kViewPos, rayDir, kGroundRadiusMm) >= 0.0) {
       sunLum *= 0.0;
     } else {
       // If the sun value is applied to this pixel, we need to calculate the
@@ -115,7 +118,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   }
   lum += sunLum;
 
-  // Tonemapping and gamma. Super ad-hoc, probably a better way to do this.
+  // tonemapping and gamma. Super ad-hoc, probably a better way to do this.
   lum *= 20.0;
   lum = pow(lum, vec3(1.3));
   lum /= (smoothstep(0.0, 0.2, clamp(sunDir.y, 0.0, 1.0)) * 2.0 + 0.15);
@@ -124,5 +127,12 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 
   lum = pow(lum, vec3(1.0 / 2.2));
 
+  // apply dithering to avoid color band effect
+  lum += getDitherMask(ivec2(fragCoord.xy));
+
   fragColor = vec4(lum, 1.0);
+
+  float isDigit = PrintValue(fragCoord / vec2(8.0, 15.0),
+                             iMouse.x / iResolution.x, 5.0, 3.0);
+  fragColor = mix(fragColor, vec4(0.0, 1.0, 0.0, 1.0), isDigit);
 }

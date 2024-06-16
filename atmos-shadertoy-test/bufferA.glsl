@@ -6,11 +6,11 @@
 const float sunTransmittanceSteps = 40.0;
 
 vec3 getSunTransmittance(vec3 pos, vec3 sunDir) {
-  if (rayIntersectSphere(pos, sunDir, kGroundRadiusMM) > 0.0) {
+  if (rayIntersectSphere(pos, sunDir, kGroundRadiusMm) > 0.0) {
     return vec3(0.0);
   }
 
-  float atmoDist = rayIntersectSphere(pos, sunDir, kAtmosphereRadiusMM);
+  float atmoDist = rayIntersectSphere(pos, sunDir, kAtmosphereRadiusMm);
   float t = 0.0;
 
   vec3 transmittance = vec3(1.0);
@@ -31,16 +31,14 @@ vec3 getSunTransmittance(vec3 pos, vec3 sunDir) {
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-  if (fragCoord.x >= (kTLutRes.x + 1.5) || fragCoord.y >= (kTLutRes.y + 1.5)) {
+  if (any(greaterThanEqual(fragCoord.xy, kTLutRes.xy))) {
     return;
   }
+  vec2 uv = fragCoord / kTLutRes;
 
-  float u = clamp(fragCoord.x, 0.0, kTLutRes.x - 1.0) / kTLutRes.x;
-  float v = clamp(fragCoord.y, 0.0, kTLutRes.y - 1.0) / kTLutRes.y;
-
-  float sunCosTheta = 2.0 * u - 1.0;
-  float sunTheta = safeacos(sunCosTheta);
-  float height = mix(kGroundRadiusMM, kAtmosphereRadiusMM, v);
+  float sunCosTheta = 2.0 * uv.x - 1.0;
+  float sunTheta = acos(sunCosTheta);
+  float height = mix(kGroundRadiusMm, kAtmosphereRadiusMm, uv.y);
 
   vec3 pos = vec3(0.0, height, 0.0);
   vec3 sunDir = normalize(vec3(0.0, sunCosTheta, -sin(sunTheta)));
