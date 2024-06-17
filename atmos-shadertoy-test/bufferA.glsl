@@ -1,6 +1,6 @@
 #include "common.glsl"
 
-// the transmittance LUT:
+// the transmittance LUT
 // each pixel coordinate corresponds to a height and sun zenith angle, and the
 // value is the transmittance from that point to sun, through the atmosphere.
 const float sunTransmittanceSteps = 40.0;

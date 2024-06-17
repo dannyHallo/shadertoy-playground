@@ -2,9 +2,10 @@
 
 #iChannel0 "./bufferA.glsl"
 
-// Buffer B is the multiple-scattering LUT. Each pixel coordinate corresponds to
-// a height and sun zenith angle, and the value is the multiple scattering
-// approximation (Psi_ms from the paper, Eq. 10).
+// multi-scattering LUT
+// each pixel coordinate corresponds to a height and sun zenith angle, and the
+// value is the multiple scattering approximation 
+// Psi_ms from the paper, Eq.10)
 const float mulScattSteps = 20.0;
 const int sqrtSamples = 8;
 

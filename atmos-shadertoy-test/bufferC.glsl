@@ -3,9 +3,9 @@
 #iChannel0 "./bufferA.glsl"
 #iChannel1 "./bufferB.glsl"
 
-// Buffer C calculates the actual sky-view! It's a lat-long map (or maybe
-// altitude-azimuth is the better term), but the latitude/altitude is non-linear
-// to get more resolution near the horizon.
+// buffer C calculates the actual sky-view
+// it's a non-linear lat-long (altitude-azimuth) map, and has more resolution
+// near the horizon.
 const int numScatteringSteps = 32;
 vec3 raymarchScattering(vec3 pos, vec3 rayDir, vec3 sunDir, float tMax,
                         float numSteps) {
@@ -59,9 +59,11 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 
   vec2 uv = fragCoord / kSkyLutRes;
 
+  // -PI to PI
   float azimuthAngle = ((uv.x * 2.0) - 1.0) * PI;
 
-  // Non-linear mapping of altitude. See Section 5.3 of the paper.
+  // non-linear mapping of altitude
+  // see section 5.3 of the paper
   float adjV;
   if (uv.y < 0.5) {
     float coord = 1.0 - 2.0 * uv.y;
@@ -70,6 +72,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     float coord = uv.y * 2.0 - 1.0;
     adjV = coord * coord;
   }
+  adjV *= 0.5 * PI;
 
   float height = length(kViewPos);
   vec3 up = kViewPos / height;
@@ -77,7 +80,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   // float horizonAngle = safeacos(sqrt(height * height - groundRadiusMM *
   // groundRadiusMM) / height) - 0.5*PI;
   float horizonAngle = asin(kGroundRadiusMm / height) - 0.5 * PI;
-  float altitudeAngle = adjV * 0.5 * PI - horizonAngle;
+  float altitudeAngle = adjV - horizonAngle;
 
   float cosAltitude = cos(altitudeAngle);
   vec3 rayDir = vec3(cosAltitude * sin(azimuthAngle), sin(altitudeAngle),
