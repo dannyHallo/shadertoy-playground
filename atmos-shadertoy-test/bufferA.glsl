@@ -11,23 +11,20 @@ vec3 getSunTransmittance(vec3 pos, vec3 sunDir) {
   }
 
   float atmoDist = rayIntersectSphere(pos, sunDir, kAtmosphereRadiusMm);
-  float t = 0.0;
 
-  vec3 transmittance = vec3(1.0);
+  // equation 2 from the paper
+  vec3 sumOfExtinction = vec3(0.0);
+  float dt = atmoDist / sunTransmittanceSteps;
   for (float i = 0.0; i < sunTransmittanceSteps; i += 1.0) {
-    float newT = ((i + 0.3) / sunTransmittanceSteps) * atmoDist;
-    float dt = newT - t;
-    t = newT;
-
-    vec3 newPos = pos + t * sunDir;
+    vec3 newPos = pos + dt * (i + 0.5) * sunDir;
 
     vec3 rayleighScattering, extinction;
     float mieScattering;
     getScatteringValues(newPos, rayleighScattering, mieScattering, extinction);
 
-    transmittance *= exp(-dt * extinction);
+    sumOfExtinction += extinction;
   }
-  return transmittance;
+  return exp(-sumOfExtinction * dt);
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
