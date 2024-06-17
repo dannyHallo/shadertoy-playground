@@ -1,6 +1,6 @@
 // taken from https://www.shadertoy.com/view/3lGBDm
 
-float DigitBin(const int x) {
+float _digitBin(const int x) {
   return x == 0   ? 480599.0
          : x == 1 ? 139810.0
          : x == 2 ? 476951.0
@@ -14,7 +14,7 @@ float DigitBin(const int x) {
                   : 0.0;
 }
 
-float PrintValue(vec2 vStringCoords, float fValue, float fMaxDigits,
+float printValue(vec2 vStringCoords, float fValue, float fMaxDigits,
                  float fDecimalPlaces) {
   if ((vStringCoords.y < 0.0) || (vStringCoords.y >= 1.0))
     return 0.0;
@@ -42,7 +42,7 @@ float PrintValue(vec2 vStringCoords, float fValue, float fMaxDigits,
         }
         float fDigitValue =
             (abs(fReducedRangeValue / (pow(10.0, fDigitIndex))));
-        fCharBin = DigitBin(int(floor(mod(fDigitValue, 10.0))));
+        fCharBin = _digitBin(int(floor(mod(fDigitValue, 10.0))));
       }
     }
   }

@@ -12,6 +12,7 @@
  *    by Sébastien Hillaire (2020).
  * Very much referenced and copied Sébastien's provided code:
  *    https://github.com/sebh/UnrealEngineSkyAtmosphere
+ *    https://sebh.github.io/publications/egsr2020.pdf
  *
  * This basically implements the generation of a sky-view LUT, so it doesn't
  * include aerial perspective. It only works for views inside the atmosphere,
@@ -132,7 +133,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 
   fragColor = vec4(lum, 1.0);
 
-  float isDigit = PrintValue(fragCoord / vec2(8.0, 15.0),
-                             iMouse.x / iResolution.x, 5.0, 3.0);
+  float isDigit = printValue((fragCoord - vec2(10.0)) / vec2(8.0, 15.0),
+                             iMouse.x / iResolution.x, 1.0, 3.0);
   fragColor = mix(fragColor, vec4(0.0, 1.0, 0.0, 1.0), isDigit);
 }
