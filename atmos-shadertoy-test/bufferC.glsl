@@ -79,10 +79,11 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 
   // float horizonAngle = safeacos(sqrt(height * height - groundRadiusMM *
   // groundRadiusMM) / height) - 0.5*PI;
-  float horizonAngle = asin(kGroundRadiusMm / height) - 0.5 * PI;
-  float altitudeAngle = adjV - horizonAngle;
+  float horizonAngle = 0.5 * PI - asin(kGroundRadiusMm / height);
+  float altitudeAngle = adjV + horizonAngle;
 
   float cosAltitude = cos(altitudeAngle);
+  // TODO: there's a problem at the dir
   vec3 rayDir = vec3(cosAltitude * sin(azimuthAngle), sin(altitudeAngle),
                      -cosAltitude * cos(azimuthAngle));
 

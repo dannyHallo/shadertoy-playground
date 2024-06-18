@@ -97,17 +97,18 @@ float rayIntersectSphere(vec3 ro, vec3 rd, float radius) {
   return t + h;
 }
 
-vec3 getValFromTLUT(sampler2D tex, vec2 bufferRes, vec3 pos, vec3 sunDir) {
+vec3 getValFromTLUT(sampler2D tlutTex, vec2 bufferRes, vec3 pos, vec3 sunDir) {
   float height = length(pos);
+  // the normalized up vector
   vec3 up = pos / height;
-  float sunCosZenithAngle = dot(sunDir, up);
-  vec2 uv =
-      vec2(kTLutRes.x * clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
-           kTLutRes.y *
-               max(0.0, min(1.0, (height - kGroundRadiusMm) /
-                                     (kAtmosphereRadiusMm - kGroundRadiusMm))));
-  uv /= bufferRes;
-  return texture(tex, uv).rgb;
+  // theta is the angle from up vector to sun vector
+  float sunCosTheta = dot(sunDir, up);
+  vec2 uv = vec2(0.5 * sunCosTheta + 0.5,
+                 (height - kGroundRadiusMm) /
+                     (kAtmosphereRadiusMm - kGroundRadiusMm));
+  uv = clamp(uv, vec2(0.0), vec2(1.0));
+  uv *= kTLutRes / bufferRes;
+  return texture(tlutTex, uv).rgb;
 }
 
 vec3 getValFromMultiScattLUT(sampler2D tex, vec2 bufferRes, vec3 pos,

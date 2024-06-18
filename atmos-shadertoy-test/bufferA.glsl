@@ -33,8 +33,11 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   }
   vec2 uv = fragCoord / kTLutRes;
 
+  // map to [-1, 1)
   float sunCosTheta = 2.0 * uv.x - 1.0;
+  // the result of arccos lays in [0 - pi], so it is mapped to [pi, 0)
   float sunTheta = acos(sunCosTheta);
+  // height is mapped to [kGroundRadius, kAtmosRadius)
   float height = mix(kGroundRadiusMm, kAtmosphereRadiusMm, uv.y);
 
   vec3 pos = vec3(0.0, height, 0.0);

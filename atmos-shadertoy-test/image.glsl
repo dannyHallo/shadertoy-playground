@@ -134,6 +134,6 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   fragColor = vec4(lum, 1.0);
 
   float isDigit = printValue((fragCoord - vec2(10.0)) / vec2(8.0, 15.0),
-                             iMouse.x / iResolution.x, 1.0, 3.0);
+                             iChannelResolution[0].y, 5.0, 3.0);
   fragColor = mix(fragColor, vec4(0.0, 1.0, 0.0, 1.0), isDigit);
 }
