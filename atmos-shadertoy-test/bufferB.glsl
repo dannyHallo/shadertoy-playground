@@ -13,9 +13,9 @@ vec3 getSphericalDir(float theta, float phi) {
 }
 
 // calculates equation (5) and (7) from the paper.
-void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fms) {
+void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fMs) {
   lumTotal = vec3(0.0);
-  fms = vec3(0.0);
+  fMs = vec3(0.0);
 
   float invSamples = 1.0 / float(sqrtSamples * sqrtSamples);
   for (int i = 0; i < sqrtSamples; i++) {
@@ -93,7 +93,7 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fms) {
         }
       }
 
-      fms += lumFactor * invSamples;
+      fMs += lumFactor * invSamples;
       lumTotal += lum * invSamples;
     }
   }
