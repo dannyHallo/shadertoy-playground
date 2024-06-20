@@ -12,7 +12,7 @@ vec3 raymarchScattering(vec3 pos, vec3 rayDir, vec3 sunDir, float tMax,
   float cosTheta = dot(rayDir, sunDir);
 
   float miePhaseValue = getMiePhase(cosTheta);
-  float rayleighPhaseValue = getRayleighPhase(-cosTheta);
+  float rayleighPhaseValue = getRayleighPhase(cosTheta);
 
   vec3 lum = vec3(0.0);
   vec3 transmittance = vec3(1.0);

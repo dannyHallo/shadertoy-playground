@@ -32,6 +32,11 @@ vec3 getSunDir(float sunPos, vec2 iResolution) {
   return normalize(vec3(0.0, sin(altitude), -cos(altitude)));
 }
 
+float getRayleighPhase(float cosTheta) {
+  const float k = 3.0 / (16.0 * PI);
+  return k * (1.0 + cosTheta * cosTheta);
+}
+
 float getMiePhase(float cosTheta) {
   const float g = 0.8;
   const float scale = 3.0 / (8.0 * PI);
@@ -40,11 +45,6 @@ float getMiePhase(float cosTheta) {
   float denom = (2.0 + g * g) * pow((1.0 + g * g - 2.0 * g * cosTheta), 1.5);
 
   return scale * num / denom;
-}
-
-float getRayleighPhase(float cosTheta) {
-  const float k = 3.0 / (16.0 * PI);
-  return k * (1.0 + cosTheta * cosTheta);
 }
 
 void getScatteringValues(vec3 pos, out vec3 rayleighScattering,
