@@ -14,14 +14,15 @@ const vec2 kSkyLutRes = vec2(200.0);
 
 const vec3 kGroundAlbedo = vec3(0.3);
 
-// these are per megameter.
+// found in sec 4, table 1
 const vec3 kRayleighScatteringBase = vec3(5.802, 13.558, 33.1);
-const float kRayleighAbsorptionBase = 0.0;
+// rayleigh does not absorb
 
 const float kMieScatteringBase = 3.996;
 const float kMieAbsorptionBase = 4.4;
 
-const vec3 kOzoneAbsorptionBase = vec3(0.650, 1.881, .085);
+// ozone does not scatter
+const vec3 kOzoneAbsorptionBase = vec3(0.650, 1.881, 0.085);
 
 float _getSunAltitude(float sunPos, vec2 iResolution) {
   return (sunPos * 2.0 - 1.0) * PI;
@@ -47,24 +48,25 @@ float getMiePhase(float cosTheta) {
   return scale * num / denom;
 }
 
-void getScatteringValues(vec3 pos, out vec3 rayleighScattering,
-                         out float mieScattering, out vec3 extinction) {
+void getScatteringValues(vec3 pos, out vec3 oRayleighScattering,
+                         out float oMieScattering, out vec3 oExtinction) {
   float altitudeKM = (length(pos) - kGroundRadiusMm) * 1000.0;
 
   float rayleighDensity = exp(-altitudeKM * 0.125);
   float mieDensity = exp(-altitudeKM * 0.833);
 
-  rayleighScattering = kRayleighScatteringBase * rayleighDensity;
-  float rayleighAbsorption = kRayleighAbsorptionBase * rayleighDensity;
+  oRayleighScattering = kRayleighScatteringBase * rayleighDensity;
 
-  mieScattering = kMieScatteringBase * mieDensity;
+  oMieScattering = kMieScatteringBase * mieDensity;
   float mieAbsorption = kMieAbsorptionBase * mieDensity;
 
+  // ozone does not scatter
   vec3 ozoneAbsorption =
       kOzoneAbsorptionBase * max(0.0, 1.0 - abs(altitudeKM - 25.0) / 15.0);
 
-  extinction = rayleighScattering + rayleighAbsorption + mieScattering +
-               mieAbsorption + ozoneAbsorption;
+  // the sum of all scattering and obsorbtion
+  oExtinction =
+      oRayleighScattering + oMieScattering + mieAbsorption + ozoneAbsorption;
 }
 
 float safeacos(const float x) { return acos(clamp(x, -1.0, 1.0)); }

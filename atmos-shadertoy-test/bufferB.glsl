@@ -44,12 +44,9 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fMs) {
       float miePhaseValue = getMiePhase(cosTheta);
 
       vec3 lum = vec3(0.0), lumFactor = vec3(0.0), transmittance = vec3(1.0);
-      float t = 0.0;
+      float dt = tMax / mulScattSteps;
       for (float stepI = 0.0; stepI < mulScattSteps; stepI += 1.0) {
-        float newT = ((stepI + 0.3) / mulScattSteps) * tMax;
-        float dt = newT - t;
-        t = newT;
-        vec3 newPos = pos + t * rayDir;
+        vec3 newPos = pos + dt * (stepI + 0.5) * rayDir;
 
         vec3 rayleighScattering, extinction;
         float mieScattering;
@@ -58,7 +55,7 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fMs) {
 
         vec3 sampleTransmittance = exp(-dt * extinction);
 
-        // Integrate within each segment.
+        // integrate within each segment
         vec3 scatteringNoPhase = rayleighScattering + mieScattering;
         vec3 scatteringF =
             (scatteringNoPhase - scatteringNoPhase * sampleTransmittance) /
