@@ -2,10 +2,8 @@
 
 #iChannel0 "./bufferA.glsl"
 
-// multi-scattering LUT
-// each pixel coordinate corresponds to a height and sun zenith angle, and the
-// value is the multiple scattering approximation 
-// Psi_ms from the paper, Eq.10)
+// multi-scattering approximation LUT
+// each pixel coordinate corresponds to a height and sun zenith angle
 const float mulScattSteps = 20.0;
 const int sqrtSamples = 8;
 
@@ -49,7 +47,6 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fms) {
         float newT = ((stepI + 0.3) / mulScattSteps) * tMax;
         float dt = newT - t;
         t = newT;
-
         vec3 newPos = pos + t * rayDir;
 
         vec3 rayleighScattering, extinction;
@@ -107,7 +104,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   vec2 uv = fragCoord / kMsLutRes;
 
   float sunCosTheta = 2.0 * uv.x - 1.0;
-  float sunTheta = safeacos(sunCosTheta);
+  float sunTheta = acos(sunCosTheta);
   float height = mix(kGroundRadiusMm, kAtmosphereRadiusMm, uv.y);
 
   vec3 pos = vec3(0.0, height, 0.0);
