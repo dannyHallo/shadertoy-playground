@@ -44,37 +44,37 @@ vec3 getMulScattValues(vec3 pos, vec3 sunDir) {
       float cosTheta = dot(rayDir, sunDir);
 
       // d prefix denotes directional
-      float dRayleighVal = getRayleighPhase(cosTheta);
-      float dMieVal = getMiePhase(cosTheta);
+      float dRayleighPhaseVal = getRayleighPhase(cosTheta);
+      float dMiePhaseVal = getMiePhase(cosTheta);
 
       vec3 dSecondOrderLum = vec3(0.0);
       vec3 dMsFac = vec3(0.0);
       vec3 dUpToDateTransmittance = vec3(1.0);
 
-      const float dt = tMax / mulScattSteps;
+      float dt = tMax / mulScattSteps;
 
       for (float stepI = 0.0; stepI < mulScattSteps; stepI += 1.0) {
         vec3 marchedPos = pos + dt * (stepI + 0.5) * rayDir;
 
-        vec3 rayleighScattering, extinction;
+        vec3 rayleighScattering;
+        vec3 extinction; // extent of being absorbed or scattered
         float mieScattering;
         getScatteringValues(marchedPos, rayleighScattering, mieScattering,
                             extinction);
 
         // transmittance in unit length, at current pos
         vec3 transmittedOverDt = exp(-dt * extinction);
-
         vec3 scatteredOrAbsorbedOverDt = 1.0 - transmittedOverDt;
 
-        vec3 scatteringNoPhase = rayleighScattering + mieScattering;
-        vec3 scatteringF =
-            scatteredOrAbsorbedOverDt * scatteringNoPhase / extinction;
+        vec3 scatteredExtinction = rayleighScattering + mieScattering;
+        vec3 scatteredOverDt =
+            scatteredOrAbsorbedOverDt * (scatteredExtinction / extinction);
 
         dUpToDateTransmittance *= transmittedOverDt;
-        dMsFac += dUpToDateTransmittance * scatteringF;
+        dMsFac += dUpToDateTransmittance * scatteredOverDt;
 
-        vec3 rayleighInScattering = rayleighScattering * dRayleighVal;
-        float mieInScattering = mieScattering * miePhaseValue;
+        vec3 rayleighInScattering = rayleighScattering * dRayleighPhaseVal;
+        float mieInScattering = mieScattering * dMiePhaseVal;
 
         // eq 6, with correction to the paper: S(x,w_s) should be S(x-tv,w_s).
         vec3 sunTransmittance = getValFromTLUT(
@@ -84,7 +84,7 @@ vec3 getMulScattValues(vec3 pos, vec3 sunDir) {
 
         // integrated scattering within path segment
         vec3 scatteringIntegral =
-            scatteredOrAbsorbedOverDt * inScattering / extinction;
+            scatteredOrAbsorbedOverDt * (inScattering / extinction);
 
         dSecondOrderLum += dUpToDateTransmittance * scatteringIntegral;
       }
@@ -99,10 +99,12 @@ vec3 getMulScattValues(vec3 pos, vec3 sunDir) {
         }
       }
 
-      msFac += dMsFac * sampleCountInv;
-      secondOrderLum += dSecondOrderLum * sampleCountInv;
+      msFac += dMsFac;
+      secondOrderLum += dSecondOrderLum;
     }
   }
+  msFac *= sampleCountInv;
+  secondOrderLum *= sampleCountInv;
 
   // eq 10: calculates psi
   return secondOrderLum / (1.0 - msFac);
