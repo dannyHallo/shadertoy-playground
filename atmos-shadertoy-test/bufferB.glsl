@@ -13,10 +13,10 @@ vec3 getSphericalDir(float theta, float phi) {
 }
 
 // eq 5 & 7
-void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 oSecondOrderLum,
-                       out vec3 oFMs) {
-  oSecondOrderLum = vec3(0.0);
-  oFMs = vec3(0.0);
+// returns psi
+vec3 getMulScattValues(vec3 pos, vec3 sunDir) {
+  vec3 secondOrderLum = vec3(0.0);
+  vec3 fractionOfLightScattered = vec3(0.0);
 
   float sampleCountInv = 1.0 / float(sampleCountSqrt * sampleCountSqrt);
   for (int i = 0; i < sampleCountSqrt; i++) {
@@ -45,7 +45,7 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 oSecondOrderLum,
 
       vec3 lum = vec3(0.0);
       vec3 lumFactor = vec3(0.0);
-      vec3 transmittance = vec3(1.0);
+      vec3 upToDateTransmittance = vec3(1.0);
       float dt = tMax / mulScattSteps;
       for (float stepI = 0.0; stepI < mulScattSteps; stepI += 1.0) {
         vec3 marchedPos = pos + dt * (stepI + 0.5) * rayDir;
@@ -56,12 +56,16 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 oSecondOrderLum,
                             extinction);
 
         // transmittance in unit length, at current pos
-        vec3 sampleTransmittance = exp(-dt * extinction);
+        vec3 transmittedOverDt = exp(-dt * extinction);
+
+        vec3 scatteredOrAbsorbedOverDt = 1.0 - transmittedOverDt;
 
         vec3 scatteringNoPhase = rayleighScattering + mieScattering;
         vec3 scatteringF =
-            (1.0 - sampleTransmittance) * scatteringNoPhase / extinction;
-        lumFactor += transmittance * scatteringF;
+            scatteredOrAbsorbedOverDt * scatteringNoPhase / extinction;
+
+        upToDateTransmittance *= transmittedOverDt;
+        lumFactor += upToDateTransmittance * scatteringF;
 
         vec3 rayleighInScattering = rayleighScattering * rayleighPhaseValue;
         float mieInScattering = mieScattering * miePhaseValue;
@@ -74,26 +78,28 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 oSecondOrderLum,
 
         // integrated scattering within path segment
         vec3 scatteringIntegral =
-            (1.0 - sampleTransmittance) * inScattering / extinction;
+            scatteredOrAbsorbedOverDt * inScattering / extinction;
 
-        lum += transmittance * scatteringIntegral;
-        transmittance *= sampleTransmittance;
+        lum += upToDateTransmittance * scatteringIntegral;
       }
 
       if (hitsGround) {
         vec3 hitPos = pos + groundDist * rayDir;
         if (dot(pos, sunDir) > 0.0) {
           hitPos = normalize(hitPos) * kGroundRadiusMm;
-          lum += transmittance * kGroundAlbedo *
+          lum += upToDateTransmittance * kGroundAlbedo *
                  getValFromTLUT(iChannel0, iChannelResolution[0].xy, hitPos,
                                 sunDir);
         }
       }
 
-      oFMs += lumFactor * sampleCountInv;
-      oSecondOrderLum += lum * sampleCountInv;
+      fractionOfLightScattered += lumFactor * sampleCountInv;
+      secondOrderLum += lum * sampleCountInv;
     }
   }
+
+  // eq 10: calculates psi
+  return secondOrderLum / (1.0 - fractionOfLightScattered);
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
@@ -109,10 +115,5 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   vec3 pos = vec3(0.0, height, 0.0);
   vec3 sunDir = normalize(vec3(0.0, sunCosTheta, -sin(sunTheta)));
 
-  vec3 secondOrderLum, fMs;
-  getMulScattValues(pos, sunDir, secondOrderLum, fMs);
-
-  // eq 10
-  vec3 psi = secondOrderLum / (1.0 - fMs);
-  fragColor = vec4(psi, 1.0);
+  fragColor = vec4(getMulScattValues(pos, sunDir), 1.0);
 }
