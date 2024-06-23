@@ -1,7 +1,10 @@
 
 const float PI = 3.14159265358;
 
-// units are in megameters.
+// phase function: describes the directionality of scattering.
+// scattering coefficients: describe the intensity of scattering.
+
+// units are in megameters
 const float kGroundRadiusMm = 6.36;
 const float kAtmosphereRadiusMm = 6.46;
 

@@ -15,11 +15,11 @@ vec3 getSunTransmittance(vec3 pos, vec3 sunDir) {
   vec3 sumOfExtinction = vec3(0.0);
   float dt = atmoDist / sunTransmittanceSteps;
   for (float i = 0.0; i < sunTransmittanceSteps; i += 1.0) {
-    vec3 newPos = pos + dt * (i + 0.5) * sunDir;
+    vec3 marchedPos = pos + dt * (i + 0.5) * sunDir;
 
     vec3 rayleighScattering, extinction;
     float mieScattering;
-    getScatteringValues(newPos, rayleighScattering, mieScattering, extinction);
+    getScatteringValues(marchedPos, rayleighScattering, mieScattering, extinction);
 
     sumOfExtinction += extinction;
   }

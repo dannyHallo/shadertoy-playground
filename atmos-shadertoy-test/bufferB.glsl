@@ -5,31 +5,31 @@
 // multi-scattering approximation LUT
 // each pixel coordinate corresponds to a height and sun zenith angle
 const float mulScattSteps = 20.0;
-const int sqrtSamples = 8;
+const int sampleCountSqrt = 8;
 
 vec3 getSphericalDir(float theta, float phi) {
   float sinPhi = sin(phi);
   return vec3(sinPhi * sin(theta), cos(phi), sinPhi * cos(theta));
 }
 
-// calculates equation (5) and (7) from the paper.
-void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fMs) {
-  lumTotal = vec3(0.0);
-  fMs = vec3(0.0);
+// eq 5 & 7
+void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 oSecondOrderLum,
+                       out vec3 oFMs) {
+  oSecondOrderLum = vec3(0.0);
+  oFMs = vec3(0.0);
 
-  float invSamples = 1.0 / float(sqrtSamples * sqrtSamples);
-  for (int i = 0; i < sqrtSamples; i++) {
-    for (int j = 0; j < sqrtSamples; j++) {
-      // this integral is symmetric about theta = 0 (or theta = PI), so we
-      // only need to integrate from zero to PI, not zero to 2*PI.
-
+  float sampleCountInv = 1.0 / float(sampleCountSqrt * sampleCountSqrt);
+  for (int i = 0; i < sampleCountSqrt; i++) {
+    for (int j = 0; j < sampleCountSqrt; j++) {
       // (0 -> 1) for each component
-      vec2 ij01 = (vec2(i, j) + vec2(0.5)) / float(sqrtSamples);
-      // (0 -> pi), uniform
+      vec2 ij01 = (vec2(i, j) + vec2(0.5)) / float(sampleCountSqrt);
+      // (0 -> pi), uniform:
+      // this integral is symmetric about theta = 0 (or theta = PI), so we
+      // only need to integrate from zero to PI, not zero to 2*PI
       float theta = PI * ij01.x;
 
       // (1 -> -1) -->acos--> (0 -> pi), uniform before acos
-      float phi = safeacos(1.0 - 2.0 * ij01.y);
+      float phi = acos(1.0 - 2.0 * ij01.y);
       vec3 rayDir = getSphericalDir(theta, phi);
 
       float atmosDist = rayIntersectSphere(pos, rayDir, kAtmosphereRadiusMm);
@@ -43,44 +43,44 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fMs) {
       float rayleighPhaseValue = getRayleighPhase(cosTheta);
       float miePhaseValue = getMiePhase(cosTheta);
 
-      vec3 lum = vec3(0.0), lumFactor = vec3(0.0), transmittance = vec3(1.0);
+      vec3 lum = vec3(0.0);
+      vec3 lumFactor = vec3(0.0);
+      vec3 transmittance = vec3(1.0);
       float dt = tMax / mulScattSteps;
       for (float stepI = 0.0; stepI < mulScattSteps; stepI += 1.0) {
-        vec3 newPos = pos + dt * (stepI + 0.5) * rayDir;
+        vec3 marchedPos = pos + dt * (stepI + 0.5) * rayDir;
 
         vec3 rayleighScattering, extinction;
         float mieScattering;
-        getScatteringValues(newPos, rayleighScattering, mieScattering,
+        getScatteringValues(marchedPos, rayleighScattering, mieScattering,
                             extinction);
 
+        // transmittance in unit length, at current pos
         vec3 sampleTransmittance = exp(-dt * extinction);
 
-        // integrate within each segment
         vec3 scatteringNoPhase = rayleighScattering + mieScattering;
         vec3 scatteringF =
-            (scatteringNoPhase - scatteringNoPhase * sampleTransmittance) /
-            extinction;
+            (1.0 - sampleTransmittance) * scatteringNoPhase / extinction;
         lumFactor += transmittance * scatteringF;
-
-        // This is slightly different from the paper, but I think the paper has
-        // a mistake? In equation (6), I think S(x,w_s) should be S(x-tv,w_s).
-        vec3 sunTransmittance =
-            getValFromTLUT(iChannel0, iChannelResolution[0].xy, newPos, sunDir);
 
         vec3 rayleighInScattering = rayleighScattering * rayleighPhaseValue;
         float mieInScattering = mieScattering * miePhaseValue;
+
+        // eq 6, with correction to the paper: S(x,w_s) should be S(x-tv,w_s).
+        vec3 sunTransmittance = getValFromTLUT(
+            iChannel0, iChannelResolution[0].xy, marchedPos, sunDir);
         vec3 inScattering =
             (rayleighInScattering + mieInScattering) * sunTransmittance;
 
-        // Integrated scattering within path segment.
+        // integrated scattering within path segment
         vec3 scatteringIntegral =
-            (inScattering - inScattering * sampleTransmittance) / extinction;
+            (1.0 - sampleTransmittance) * inScattering / extinction;
 
-        lum += scatteringIntegral * transmittance;
+        lum += transmittance * scatteringIntegral;
         transmittance *= sampleTransmittance;
       }
 
-      if (groundDist > 0.0) {
+      if (hitsGround) {
         vec3 hitPos = pos + groundDist * rayDir;
         if (dot(pos, sunDir) > 0.0) {
           hitPos = normalize(hitPos) * kGroundRadiusMm;
@@ -90,8 +90,8 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fMs) {
         }
       }
 
-      fMs += lumFactor * invSamples;
-      lumTotal += lum * invSamples;
+      oFMs += lumFactor * sampleCountInv;
+      oSecondOrderLum += lum * sampleCountInv;
     }
   }
 }
@@ -109,10 +109,10 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   vec3 pos = vec3(0.0, height, 0.0);
   vec3 sunDir = normalize(vec3(0.0, sunCosTheta, -sin(sunTheta)));
 
-  vec3 lum, fMs;
-  getMulScattValues(pos, sunDir, lum, fMs);
+  vec3 secondOrderLum, fMs;
+  getMulScattValues(pos, sunDir, secondOrderLum, fMs);
 
-  // Equation 10 from the paper.
-  vec3 psi = lum / (1.0 - fMs);
+  // eq 10
+  vec3 psi = secondOrderLum / (1.0 - fMs);
   fragColor = vec4(psi, 1.0);
 }
