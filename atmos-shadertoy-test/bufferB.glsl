@@ -48,6 +48,8 @@ vec3 getMulScattValues(vec3 pos, vec3 sunDir) {
       float dMiePhaseVal = getMiePhase(cosTheta);
 
       vec3 dSecondOrderLum = vec3(0.0);
+      // quantifies the proportion of light that contributes to multiple
+      // scattering in a given direction
       vec3 dMsFac = vec3(0.0);
       vec3 dUpToDateTransmittance = vec3(1.0);
 
@@ -57,8 +59,8 @@ vec3 getMulScattValues(vec3 pos, vec3 sunDir) {
         vec3 marchedPos = pos + dt * (stepI + 0.5) * rayDir;
 
         vec3 rayleighScattering;
-        vec3 extinction; // extent of being absorbed or scattered
         float mieScattering;
+        vec3 extinction; // extent of being absorbed or scattered
         getScatteringValues(marchedPos, rayleighScattering, mieScattering,
                             extinction);
 
@@ -67,6 +69,8 @@ vec3 getMulScattValues(vec3 pos, vec3 sunDir) {
         vec3 scatteredOrAbsorbedOverDt = 1.0 - transmittedOverDt;
 
         vec3 scatteredExtinction = rayleighScattering + mieScattering;
+        // calculates the overall proportion of light that's been scattered over
+        // dt, without considering phase (angle)
         vec3 scatteredOverDt =
             scatteredOrAbsorbedOverDt * (scatteredExtinction / extinction);
 
@@ -82,7 +86,8 @@ vec3 getMulScattValues(vec3 pos, vec3 sunDir) {
         vec3 inScattering =
             (rayleighInScattering + mieInScattering) * sunTransmittance;
 
-        // integrated scattering within path segment
+        // calculates the proportion of light that's been scattered in this
+        // particular angle
         vec3 scatteringIntegral =
             scatteredOrAbsorbedOverDt * (inScattering / extinction);
 
@@ -92,7 +97,7 @@ vec3 getMulScattValues(vec3 pos, vec3 sunDir) {
       if (hitsGround) {
         vec3 hitPos = pos + groundDist * rayDir;
         if (dot(pos, sunDir) > 0.0) {
-          hitPos = normalize(hitPos) * kGroundRadiusMm;
+          // hitPos = normalize(hitPos) * kGroundRadiusMm;
           dSecondOrderLum += dUpToDateTransmittance * kGroundAlbedo *
                              getValFromTLUT(iChannel0, iChannelResolution[0].xy,
                                             hitPos, sunDir);

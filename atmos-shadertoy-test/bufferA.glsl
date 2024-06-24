@@ -34,7 +34,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 
   // [-1 -> 1)
   float sunCosTheta = 2.0 * uv.x - 1.0;
-  // the result of arccos lays in [0 - pi]
+  // the result of arccos lays in [0 -> pi]
   // [pi -> 0)
   float sunTheta = acos(sunCosTheta);
   // [kGroundRadius -> kAtmosRadius)
