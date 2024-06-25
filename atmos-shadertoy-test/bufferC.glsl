@@ -59,35 +59,25 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 
   vec2 uv = fragCoord / kSkyLutRes;
 
-  // [-pi -> pi)
-  float azimuthAngle = ((uv.x * 2.0) - 1.0) * PI;
-
-  // non-linear mapping of altitude
-  // see section 5.3 of the paper
-  float adjV;
-  if (uv.y < 0.5) {
-    // [1 -> 0)
-    float coord = 1.0 - 2.0 * uv.y;
-    // [-1 -> 0] curved
-    adjV = -coord * coord;
-  } else {
-    // [0 -> 1)
-    float coord = uv.y * 2.0 - 1.0;
-    // [0 -> 1) curved
-    adjV = coord * coord;
-  }
-  // [-0.5pi -> 0.5pi) curved
-  adjV *= 0.5 * PI;
-
   float height = length(kViewPos);
   vec3 up = kViewPos / height;
+
+  // non-linear mapping of altitude, see section 5.3
+  // uv.y is mapped from [0, 1) to [-0.5pi, 0.5pi)
+  float centeredY = uv.y - 0.5;
+  float adjV = sign(centeredY) * (centeredY * centeredY) * TWO_PI;
 
   // the horizon offset, used to decide the most-encoded angle (the actual
   // horizon, rather than 0 deg)
   float horizonAngle = acos(kGroundRadiusMm / height);
+
   float altitudeAngle = adjV + horizonAngle;
 
   float cosAltitude = cos(altitudeAngle);
+
+  // [-pi -> pi)
+  float azimuthAngle = ((uv.x * 2.0) - 1.0) * PI;
+
   // TODO: there's a problem at the dir
   vec3 rayDir = vec3(cosAltitude * sin(azimuthAngle), sin(altitudeAngle),
                      -cosAltitude * cos(azimuthAngle));
