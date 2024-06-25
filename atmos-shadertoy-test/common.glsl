@@ -1,5 +1,9 @@
 
+const float QUARTER_PI = 0.785398163395;
+const float HALF_PI = 1.57079632679;
 const float PI = 3.14159265358;
+const float TWO_PI = 6.28318530716;
+const float FOUR_PI = 12.56637061432;
 
 // phase function: describes the directionality of scattering.
 // scattering coefficients: describe the intensity of scattering.
