@@ -115,7 +115,7 @@ vec3 getMulScattValues(vec3 pos, vec3 sunDir) {
   return secondOrderLum / (1.0 - msFac);
 }
 
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+void mainImage(out vec4 fragColor, vec2 fragCoord) {
   if (any(greaterThanEqual(fragCoord.xy, kMsLutRes.xy))) {
     return;
   }

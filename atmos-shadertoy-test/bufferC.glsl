@@ -52,7 +52,7 @@ vec3 raymarchScattering(vec3 pos, vec3 rayDir, vec3 sunDir, float tMax,
   return lum;
 }
 
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+void mainImage(out vec4 fragColor, vec2 fragCoord) {
   if (any(greaterThanEqual(fragCoord.xy, kSkyLutRes.xy))) {
     return;
   }
@@ -65,13 +65,11 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   // non-linear mapping of altitude, see section 5.3
   // uv.y is mapped from [0, 1) to [-0.5pi, 0.5pi)
   float centeredY = uv.y - 0.5;
-  float adjV = sign(centeredY) * (centeredY * centeredY) * TWO_PI;
+  float altitudeAngle = sign(centeredY) * (centeredY * centeredY) * TWO_PI;
 
   // the horizon offset, used to decide the most-encoded angle (the actual
   // horizon, rather than 0 deg)
-  float horizonAngle = acos(kGroundRadiusMm / height);
-
-  float altitudeAngle = adjV + horizonAngle;
+  altitudeAngle += acos(kGroundRadiusMm / height);
 
   float cosAltitude = cos(altitudeAngle);
 

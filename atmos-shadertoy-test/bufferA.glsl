@@ -26,7 +26,7 @@ vec3 getSunTransmittance(vec3 pos, vec3 sunDir) {
   return exp(-dt * sumOfExtinction);
 }
 
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+void mainImage(out vec4 fragColor, vec2 fragCoord) {
   if (any(greaterThanEqual(fragCoord.xy, kTLutRes.xy))) {
     return;
   }

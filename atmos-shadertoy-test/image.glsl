@@ -86,7 +86,7 @@ vec3 sunWithBloom(vec3 rayDir, vec3 sunDir) {
   return vec3(gaussianBloom + invBloom);
 }
 
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+void mainImage(out vec4 fragColor, vec2 fragCoord) {
   vec3 sunDir = getSunDir(iMouse.x / iResolution.x, iResolution.xy);
 
   vec3 camDir = normalize(vec3(0.0, 0.27, -1.0));
