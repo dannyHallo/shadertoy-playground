@@ -2,6 +2,8 @@
 
 // transmittance LUT: irrelevant to sun
 // each pixel coordinate corresponds to a height and sun zenith angle
+// does NOT need to update when the sun changes its angle
+// need to be updated when the properties of the atmosphere changes
 const float sunTransmittanceSteps = 40.0;
 
 vec3 getSunTransmittance(vec3 pos, vec3 sunDir) {

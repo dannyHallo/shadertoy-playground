@@ -1,4 +1,3 @@
-
 const float QUARTER_PI = 0.785398163395;
 const float HALF_PI = 1.57079632679;
 const float PI = 3.14159265358;
@@ -31,21 +30,30 @@ const float kMieAbsorptionBase = 4.4;
 // ozone does not scatter
 const vec3 kOzoneAbsorptionBase = vec3(0.650, 1.881, 0.085);
 
-float _getSunAltitude(float sunPos, vec2 iResolution) {
-  return (sunPos * 2.0 - 1.0) * PI;
-}
+// input:  [0, 1]
+// output: [-pi, pi]
+float _getSunAltitude(float sunPos) { return (sunPos * 2.0 - 1.0) * PI; }
 
-vec3 getSunDir(float sunPos, vec2 iResolution) {
-  float altitude = _getSunAltitude(sunPos, iResolution);
+// input: [0, 1]
+// output: unit vector pointing towards the sun
+vec3 getSunDir(float sunPos) {
+  float altitude = _getSunAltitude(sunPos);
   return normalize(vec3(0.0, sin(altitude), -cos(altitude)));
 }
 
+// the phase function for rayleigh scattering
+// theta is the angle between the incident light and the scattered light
 float getRayleighPhase(float cosTheta) {
   const float k = 3.0 / (16.0 * PI);
   return k * (1.0 + cosTheta * cosTheta);
 }
 
+// the phase function for mie scattering
 float getMiePhase(float cosTheta) {
+  // g is the asymmetry factor, in [-1, 1]
+  // when g = 0, the phase function is isotropic (just like rayleigh scattering)
+  // when g > 0, the phase function is forward-focused
+  // when g < 0, the phase function is backward-focused
   const float g = 0.8;
   const float scale = 3.0 / (8.0 * PI);
 
@@ -55,6 +63,9 @@ float getMiePhase(float cosTheta) {
   return scale * num / denom;
 }
 
+// calculate the scattering weights and total extinction for a given position
+// the proportion of light that is extincted over a small step t can be
+// calculated using the formula exp(-w * t), where w is the extinction weight.
 void getScatteringValues(vec3 pos, out vec3 oRayleighScattering,
                          out float oMieScattering, out vec3 oExtinction) {
   float altitudeKM = (length(pos) - kGroundRadiusMm) * 1000.0;

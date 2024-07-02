@@ -42,7 +42,7 @@ vec3 getValFromSkyLUT(vec3 rayDir, vec3 sunDir) {
   float altitudeAngle =
       horizonAngle - acos(dot(rayDir, up)); // Between -PI/2 and PI/2
   float azimuthAngle;                       // Between 0 and 2*PI
-  if (abs(altitudeAngle) > (0.5 * PI - .0001)) {
+  if (abs(altitudeAngle) > (0.5 * PI - 1e-3)) {
     // Looking nearly straight up or down.
     azimuthAngle = 0.0;
   } else {
@@ -87,19 +87,21 @@ vec3 sunWithBloom(vec3 rayDir, vec3 sunDir) {
 }
 
 void mainImage(out vec4 fragColor, vec2 fragCoord) {
-  vec3 sunDir = getSunDir(iMouse.x / iResolution.x, iResolution.xy);
+  vec2 uv = fragCoord / iResolution.xy;
+
+  vec3 sunDir = getSunDir(iMouse.x / iResolution.x);
 
   vec3 camDir = normalize(vec3(0.0, 0.27, -1.0));
-  float camFOVWidth = PI / 3.5;
-  float camWidthScale = 2.0 * tan(camFOVWidth / 2.0);
-  float camHeightScale = camWidthScale * iResolution.y / iResolution.x;
+  float camVFov = 0.2 * PI;
+  float camVExtent = 2.0 * tan(camVFov / 2.0);
+  float camWExtent = camVExtent * iResolution.x / iResolution.y;
 
   vec3 camRight = normalize(cross(camDir, vec3(0.0, 1.0, 0.0)));
   vec3 camUp = normalize(cross(camRight, camDir));
 
-  vec2 xy = 2.0 * (fragCoord.xy / iResolution.xy) - 1.0;
-  vec3 rayDir = normalize(camDir + camRight * xy.x * camWidthScale +
-                          camUp * xy.y * camHeightScale);
+  vec2 uvRemapped = 2.0 * uv - 1.0;
+  vec3 rayDir = normalize(camDir + camRight * uvRemapped.x * camWExtent +
+                          camUp * uvRemapped.y * camVExtent);
 
   vec3 lum = getValFromSkyLUT(rayDir, sunDir);
 

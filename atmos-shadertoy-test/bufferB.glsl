@@ -4,6 +4,8 @@
 
 // multi-scattering approximation LUT
 // each pixel coordinate corresponds to a height and sun zenith angle
+// does NOT need to update when the sun changes its angle
+// need to be updated when the properties of the atmosphere changes
 const float mulScattSteps = 20.0;
 const int sampleCountSqrt = 8;
 
