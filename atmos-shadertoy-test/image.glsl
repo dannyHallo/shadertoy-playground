@@ -89,7 +89,8 @@ vec3 sunWithBloom(vec3 rayDir, vec3 sunDir) {
 void mainImage(out vec4 fragColor, vec2 fragCoord) {
   vec2 uv = fragCoord / iResolution.xy;
 
-  vec3 sunDir = getSunDir(iMouse.x / iResolution.x);
+  float sunAltitude = getSunAltitude(iMouse.x / iResolution.x);
+  vec3 sunDir = getSunDir(sunAltitude);
 
   vec3 camDir = normalize(vec3(0.0, 0.27, -1.0));
   float camVFov = 0.2 * PI;

@@ -73,17 +73,16 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
 
   float cosAltitude = cos(altitudeAngle);
 
-  // [-pi -> pi)
+  // [-pi, pi)
   float azimuthAngle = ((uv.x * 2.0) - 1.0) * PI;
 
   // TODO: -cosAltitude should be cosAltitude in right hand side?
   vec3 rayDir = vec3(cosAltitude * sin(azimuthAngle), sin(altitudeAngle),
                      -cosAltitude * cos(azimuthAngle));
 
-  float sunAltitude =
-      HALF_PI -
-      acos(dot(getSunDir(iMouse.x / iResolution.x), up));
-  vec3 sunDir = vec3(0.0, sin(sunAltitude), -cos(sunAltitude));
+  vec3 sunRawDir = getSunDir(getSunAltitude(iMouse.x / iResolution.x));
+  // correct the sunDir regarding the up vec
+  vec3 sunDir = getSunDir(HALF_PI - acos(dot(sunRawDir, up)));
 
   float atmoDist = rayIntersectSphere(kViewPos, rayDir, kAtmosphereRadiusMm);
   float groundDist = rayIntersectSphere(kViewPos, rayDir, kGroundRadiusMm);

@@ -32,13 +32,12 @@ const vec3 kOzoneAbsorptionBase = vec3(0.650, 1.881, 0.085);
 
 // input:  [0, 1]
 // output: [-pi, pi]
-float _getSunAltitude(float sunPos) { return (sunPos * 2.0 - 1.0) * PI; }
+float getSunAltitude(float sunPos) { return (sunPos * 2.0 - 1.0) * PI; }
 
-// input: [0, 1]
+// input: the angle between the sun and -z axis, using +y as the positive
 // output: unit vector pointing towards the sun
-vec3 getSunDir(float sunPos) {
-  float altitude = _getSunAltitude(sunPos);
-  return normalize(vec3(0.0, sin(altitude), -cos(altitude)));
+vec3 getSunDir(float sunAltitude) {
+  return vec3(0.0, sin(sunAltitude), -cos(sunAltitude));
 }
 
 // the phase function for rayleigh scattering
@@ -68,8 +67,10 @@ float getMiePhase(float cosTheta) {
 // calculated using the formula exp(-w * t), where w is the extinction weight.
 void getScatteringValues(vec3 pos, out vec3 oRayleighScattering,
                          out float oMieScattering, out vec3 oExtinction) {
-  float altitudeKM = (length(pos) - kGroundRadiusMm) * 1000.0;
+  float altitudeKM = (length(pos) - kGroundRadiusMm) * 1e3;
 
+  // the following magic values can be found in sec 4 (1 / 8 = 0.125 and 1 / 1.2
+  // = 0.833)
   float rayleighDensity = exp(-altitudeKM * 0.125);
   float mieDensity = exp(-altitudeKM * 0.833);
 
@@ -117,6 +118,7 @@ float rayIntersectSphere(vec3 ro, vec3 rd, float radius) {
   return t + h;
 }
 
+// look up back on that TLUT texture
 vec3 getValFromTLUT(sampler2D tex, vec2 bufferRes, vec3 pos, vec3 sunDir) {
   float height = length(pos);
   // the normalized up vector
@@ -131,6 +133,8 @@ vec3 getValFromTLUT(sampler2D tex, vec2 bufferRes, vec3 pos, vec3 sunDir) {
   return texture(tex, uv).rgb;
 }
 
+// look up back on that multi-scattering LUT texture, using the exact same
+// method as the TLUT
 vec3 getValFromMultiScattLUT(sampler2D tex, vec2 bufferRes, vec3 pos,
                              vec3 sunDir) {
   float height = length(pos);

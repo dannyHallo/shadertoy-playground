@@ -26,14 +26,14 @@ vec3 getMulScattValues(vec3 pos, vec3 sunDir) {
   // take uniform samples over all directions around a sphere, then calc avg
   for (int i = 0; i < sampleCountSqrt; i++) {
     for (int j = 0; j < sampleCountSqrt; j++) {
-      // (0 -> 1) for each component
+      // (0, 1) for each component
       vec2 ij01 = (vec2(i, j) + vec2(0.5)) / float(sampleCountSqrt);
-      // (0 -> pi), uniform:
+      // (0, pi), uniform:
       // this integral is symmetric about theta = 0 (or theta = PI), so we
       // only need to integrate from zero to PI, not zero to 2*PI
       float theta = PI * ij01.x;
 
-      // (1 -> -1) -->acos--> (0 -> pi), uniform before acos
+      // (1, -1) => acos => (0, pi), uniform before acos
       float phi = acos(1.0 - 2.0 * ij01.y);
       vec3 rayDir = getSphericalDir(theta, phi);
 

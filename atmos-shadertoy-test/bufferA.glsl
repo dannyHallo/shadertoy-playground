@@ -21,7 +21,8 @@ vec3 getSunTransmittance(vec3 pos, vec3 sunDir) {
 
     vec3 rayleighScattering, extinction;
     float mieScattering;
-    getScatteringValues(marchedPos, rayleighScattering, mieScattering, extinction);
+    getScatteringValues(marchedPos, rayleighScattering, mieScattering,
+                        extinction);
 
     sumOfExtinction += extinction;
   }
@@ -34,12 +35,12 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
   }
   vec2 uv = fragCoord / kTLutRes;
 
-  // [-1 -> 1)
+  // [-1, 1)
   float sunCosTheta = 2.0 * uv.x - 1.0;
-  // the result of arccos lays in [0 -> pi]
-  // [pi -> 0)
+  // the result of arccos lays in [0, pi]
+  // [pi, 0)
   float sunTheta = acos(sunCosTheta);
-  // [kGroundRadius -> kAtmosRadius)
+  // [kGroundRadius, kAtmosRadius)
   float height = mix(kGroundRadiusMm, kAtmosphereRadiusMm, uv.y);
 
   vec3 pos = vec3(0.0, height, 0.0);
