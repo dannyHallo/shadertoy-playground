@@ -12,7 +12,7 @@ const float kGroundRadiusMm = 6.36;
 const float kAtmosphereRadiusMm = 6.46;
 
 // 200m above the ground.
-const vec3 kViewPos = vec3(0.0, kGroundRadiusMm + 0.0002, 0.0);
+const vec3 kCamPos = vec3(0.0, kGroundRadiusMm + 0.0002, 0.0);
 
 const vec2 kTLutRes = vec2(256.0, 64.0);
 const vec2 kMsLutRes = vec2(32.0);

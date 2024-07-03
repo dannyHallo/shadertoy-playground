@@ -52,6 +52,15 @@ vec3 raymarchScattering(vec3 pos, vec3 rayDir, vec3 sunDir, float tMax,
   return lum;
 }
 
+// see section 5.3
+// input:  [0, 1)
+// output: [-0.5pi, 0.5pi)
+// non-linear encoding
+float uvYToAltitude(float uvY) {
+  float centeredY = uvY - 0.5;
+  return sign(centeredY) * (centeredY * centeredY) * TWO_PI;
+}
+
 void mainImage(out vec4 fragColor, vec2 fragCoord) {
   if (any(greaterThanEqual(fragCoord.xy, kSkyLutRes.xy))) {
     return;
@@ -59,17 +68,13 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
 
   vec2 uv = fragCoord / kSkyLutRes;
 
-  float height = length(kViewPos);
-  vec3 up = kViewPos / height;
-
-  // non-linear mapping of altitude, see section 5.3
-  // uv.y is mapped from [0, 1) to [-0.5pi, 0.5pi)
-  float centeredY = uv.y - 0.5;
-  float altitudeAngle = sign(centeredY) * (centeredY * centeredY) * TWO_PI;
+  // get the altitude angle to pre-calculate of this pixel
+  float altitudeAngle = uvYToAltitude(uv.y);
 
   // the horizon offset, used to decide the most-encoded angle (the actual
   // horizon, rather than 0 deg)
-  altitudeAngle += acos(kGroundRadiusMm / height);
+  float camHeight = length(kCamPos);
+  altitudeAngle += acos(kGroundRadiusMm / camHeight);
 
   float cosAltitude = cos(altitudeAngle);
 
@@ -80,14 +85,16 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
   vec3 rayDir = vec3(cosAltitude * sin(azimuthAngle), sin(altitudeAngle),
                      -cosAltitude * cos(azimuthAngle));
 
-  vec3 sunRawDir = getSunDir(getSunAltitude(iMouse.x / iResolution.x));
-  // correct the sunDir regarding the up vec
-  vec3 sunDir = getSunDir(HALF_PI - acos(dot(sunRawDir, up)));
+  float groundDist = rayIntersectSphere(kCamPos, rayDir, kGroundRadiusMm);
+  float tMax = groundDist >= 0.0
+                   ? groundDist
+                   : rayIntersectSphere(kCamPos, rayDir, kAtmosphereRadiusMm);
 
-  float atmoDist = rayIntersectSphere(kViewPos, rayDir, kAtmosphereRadiusMm);
-  float groundDist = rayIntersectSphere(kViewPos, rayDir, kGroundRadiusMm);
-  float tMax = (groundDist < 0.0) ? atmoDist : groundDist;
-  vec3 lum = raymarchScattering(kViewPos, rayDir, sunDir, tMax,
+  vec3 sunDir = getSunDir(getSunAltitude(iMouse.x / iResolution.x));
+  vec3 up = kCamPos / camHeight;
+  vec3 justifiedSunDir = getSunDir(HALF_PI - acos(dot(sunDir, up)));
+
+  vec3 lum = raymarchScattering(kCamPos, rayDir, justifiedSunDir, tMax,
                                 float(numScatteringSteps));
   fragColor = vec4(lum, 1.0);
 }

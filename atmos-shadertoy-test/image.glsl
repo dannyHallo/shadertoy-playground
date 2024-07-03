@@ -34,8 +34,8 @@
  */
 
 vec3 getValFromSkyLUT(vec3 rayDir, vec3 sunDir) {
-  float height = length(kViewPos);
-  vec3 up = kViewPos / height;
+  float height = length(kCamPos);
+  vec3 up = kCamPos / height;
 
   float horizonAngle = safeacos(
       sqrt(height * height - kGroundRadiusMm * kGroundRadiusMm) / height);
@@ -89,8 +89,7 @@ vec3 sunWithBloom(vec3 rayDir, vec3 sunDir) {
 void mainImage(out vec4 fragColor, vec2 fragCoord) {
   vec2 uv = fragCoord / iResolution.xy;
 
-  float sunAltitude = getSunAltitude(iMouse.x / iResolution.x);
-  vec3 sunDir = getSunDir(sunAltitude);
+  vec3 sunDir = getSunDir(getSunAltitude(iMouse.x / iResolution.x));
 
   vec3 camDir = normalize(vec3(0.0, 0.27, -1.0));
   float camVFov = 0.2 * PI;
@@ -111,13 +110,13 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
   // use smoothstep to limit the effect, so it drops off to actual zero.
   sunLum = smoothstep(0.002, 1.0, sunLum);
   if (length(sunLum) > 0.0) {
-    if (rayIntersectSphere(kViewPos, rayDir, kGroundRadiusMm) >= 0.0) {
+    if (rayIntersectSphere(kCamPos, rayDir, kGroundRadiusMm) >= 0.0) {
       sunLum *= 0.0;
     } else {
       // If the sun value is applied to this pixel, we need to calculate the
       // transmittance to obscure it.
       sunLum *=
-          getValFromTLUT(iChannel0, iChannelResolution[0].xy, kViewPos, sunDir);
+          getValFromTLUT(iChannel0, iChannelResolution[0].xy, kCamPos, sunDir);
     }
   }
   lum += sunLum;
