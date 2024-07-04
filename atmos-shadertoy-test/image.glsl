@@ -1,3 +1,4 @@
+#include "./core/color.glsl"
 #include "./core/debug.glsl"
 #include "./core/postprocessing.glsl"
 
@@ -28,6 +29,8 @@
  * (which was confirmed after reading Sébastien's code more closely).
  */
 
+float azimuthToUvX(float azimuth) { return (azimuth / PI + 1.0) * 0.5; }
+
 // see section 5.3
 // input:  [-0.5pi, 0.5pi)
 // output: [0, 1)
@@ -41,43 +44,29 @@ float altitudeToUvY(float altitude) {
  * sun on top, does some tonemapping.
  */
 vec3 getValFromSkyLUT(vec3 rayDir, vec3 sunDir) {
-  float height = length(kCamPos);
-  vec3 up = kCamPos / height;
+  float camHeight = length(kCamPos);
 
-  // float horizonAngle =
-  //     acos(sqrt(height * height - kGroundRadiusMm * kGroundRadiusMm) /
-  //     height);
-  float theta = asin(kGroundRadiusMm / height);
+  // the ray altitude, relative to the up vec of the cam
   // (-0.5pi, 0.5pi)
-  float altitudeAngle = theta - acos(dot(rayDir, up)); 
+  float rayAlt = asin(rayDir.y);
+
   // (0, 2pi)
-  float azimuthAngle;                                 
-  if (abs(altitudeAngle) > (0.5 * PI - 1e-3)) {
-    // Looking nearly straight up or down.
-    azimuthAngle = 0.0;
-  } else {
-    vec3 right = cross(sunDir, up);
-    vec3 forward = cross(up, right);
+  float azimuth;
+  // looking straight up or down
+  azimuth = atan(rayDir.x, rayDir.z);
+  vec2 uv = vec2(azimuthToUvX(azimuth), altitudeToUvY(rayAlt));
 
-    vec3 projectedDir = normalize(rayDir - up * (dot(rayDir, up)));
-    float sinTheta = dot(projectedDir, right);
-    float cosTheta = dot(projectedDir, forward);
-    azimuthAngle = atan(sinTheta, cosTheta) + PI;
-  }
-
-  // get uv.y of the corresponding altitude on the LUT
-  float uvY = altitudeToUvY(altitudeAngle);
-
-  vec2 uv = vec2(azimuthAngle / (2.0 * PI), uvY);
   uv *= kSkyLutRes;
   uv /= iChannelResolution[1].xy;
+
+  uv = clamp(uv, vec2(1e-3), vec2(0.99));
 
   return texture(iChannel1, uv).rgb;
 }
 
 vec3 jodieReinhardTonemap(vec3 c) {
   // From: https://www.shadertoy.com/view/tdSXzD
-  float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+  float l = lum(c);
   vec3 tc = c / (c + 1.0);
   return mix(c / (l + 1.0), tc, tc);
 }
@@ -146,6 +135,6 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
   fragColor = vec4(lum, 1.0);
 
   float isDigit = printValue((fragCoord - vec2(10.0)) / vec2(8.0, 15.0),
-                             iChannelResolution[0].y, 5.0, 3.0);
+                             iMouse.x / iResolution.x, 5.0, 3.0);
   fragColor = mix(fragColor, vec4(0.0, 1.0, 0.0, 1.0), isDigit);
 }
