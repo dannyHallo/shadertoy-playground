@@ -24,24 +24,34 @@
  * Also want to cite:
  *    https://www.shadertoy.com/view/tdSXzD
  * Used the jodieReinhardTonemap from there, but that also made
- * me realize that the paper switched the Mie and Rayleigh height densities
+ * me realize that the paper switched the Mie and Rayleigh camHeight densities
  * (which was confirmed after reading Sébastien's code more closely).
  */
+
+// see section 5.3
+// input:  [-0.5pi, 0.5pi)
+// output: [0, 1)
+// non-linear encoding
+float altitudeToUvY(float altitude) {
+  return 0.5 + 0.5 * sign(altitude) * sqrt(abs(altitude) * 2.0 / PI);
+}
 
 /*
  * Final output basically looks up the value from the skyLUT, and then adds a
  * sun on top, does some tonemapping.
  */
-
 vec3 getValFromSkyLUT(vec3 rayDir, vec3 sunDir) {
   float height = length(kCamPos);
   vec3 up = kCamPos / height;
 
-  float horizonAngle = safeacos(
-      sqrt(height * height - kGroundRadiusMm * kGroundRadiusMm) / height);
-  float altitudeAngle =
-      horizonAngle - acos(dot(rayDir, up)); // Between -PI/2 and PI/2
-  float azimuthAngle;                       // Between 0 and 2*PI
+  // float horizonAngle =
+  //     acos(sqrt(height * height - kGroundRadiusMm * kGroundRadiusMm) /
+  //     height);
+  float theta = asin(kGroundRadiusMm / height);
+  // (-0.5pi, 0.5pi)
+  float altitudeAngle = theta - acos(dot(rayDir, up)); 
+  // (0, 2pi)
+  float azimuthAngle;                                 
   if (abs(altitudeAngle) > (0.5 * PI - 1e-3)) {
     // Looking nearly straight up or down.
     azimuthAngle = 0.0;
@@ -55,10 +65,10 @@ vec3 getValFromSkyLUT(vec3 rayDir, vec3 sunDir) {
     azimuthAngle = atan(sinTheta, cosTheta) + PI;
   }
 
-  // Non-linear mapping of altitude angle. See Section 5.3 of the paper.
-  float v =
-      0.5 + 0.5 * sign(altitudeAngle) * sqrt(abs(altitudeAngle) * 2.0 / PI);
-  vec2 uv = vec2(azimuthAngle / (2.0 * PI), v);
+  // get uv.y of the corresponding altitude on the LUT
+  float uvY = altitudeToUvY(altitudeAngle);
+
+  vec2 uv = vec2(azimuthAngle / (2.0 * PI), uvY);
   uv *= kSkyLutRes;
   uv /= iChannelResolution[1].xy;
 
@@ -97,11 +107,11 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
   float camWExtent = camVExtent * iResolution.x / iResolution.y;
 
   vec3 camRight = normalize(cross(camDir, vec3(0.0, 1.0, 0.0)));
-  vec3 camUp = normalize(cross(camRight, camDir));
+  vec3 camcamUp = normalize(cross(camRight, camDir));
 
   vec2 uvRemapped = 2.0 * uv - 1.0;
   vec3 rayDir = normalize(camDir + camRight * uvRemapped.x * camWExtent +
-                          camUp * uvRemapped.y * camVExtent);
+                          camcamUp * uvRemapped.y * camVExtent);
 
   vec3 lum = getValFromSkyLUT(rayDir, sunDir);
 
@@ -121,7 +131,7 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
   }
   lum += sunLum;
 
-  // tonemapping and gamma. Super ad-hoc, probably a better way to do this.
+  // tonemapping and gamma. ScamUper ad-hoc, probably a better way to do this.
   lum *= 20.0;
   lum = pow(lum, vec3(1.3));
   lum /= (smoothstep(0.0, 0.2, clamp(sunDir.y, 0.0, 1.0)) * 2.0 + 0.15);

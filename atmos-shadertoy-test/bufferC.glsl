@@ -69,21 +69,21 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
   vec2 uv = fragCoord / kSkyLutRes;
 
   // get the altitude angle to pre-calculate of this pixel
-  float altitudeAngle = uvYToAltitude(uv.y);
+  float alt = uvYToAltitude(uv.y);
 
   // the horizon offset, used to decide the most-encoded angle (the actual
   // horizon, rather than 0 deg)
   float camHeight = length(kCamPos);
-  altitudeAngle += acos(kGroundRadiusMm / camHeight);
 
-  float cosAltitude = cos(altitudeAngle);
+  // TODO: shouldn't this be -= ?
+  alt += acos(kGroundRadiusMm / camHeight);
 
   // [-pi, pi)
-  float azimuthAngle = ((uv.x * 2.0) - 1.0) * PI;
+  float azi = (uv.x * 2.0 - 1.0) * PI;
 
-  // TODO: -cosAltitude should be cosAltitude in right hand side?
-  vec3 rayDir = vec3(cosAltitude * sin(azimuthAngle), sin(altitudeAngle),
-                     -cosAltitude * cos(azimuthAngle));
+  float cosAlt = cos(alt);
+  vec3 rayDir = vec3(cosAlt * sin(azi), sin(alt), -cosAlt * cos(azi));
+  
 
   float groundDist = rayIntersectSphere(kCamPos, rayDir, kGroundRadiusMm);
   float tMax = groundDist >= 0.0

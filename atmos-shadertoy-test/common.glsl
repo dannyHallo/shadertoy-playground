@@ -88,8 +88,6 @@ void getScatteringValues(vec3 pos, out vec3 oRayleighScattering,
       oRayleighScattering + oMieScattering + mieAbsorption + ozoneAbsorption;
 }
 
-float safeacos(const float x) { return acos(clamp(x, -1.0, 1.0)); }
-
 // returns: -1 - when no hitting point, or the distance to the closest hit of
 // the sphere
 float rayIntersectSphere(vec3 ro, vec3 rd, float radius) {
