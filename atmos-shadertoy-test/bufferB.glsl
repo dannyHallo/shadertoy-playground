@@ -6,7 +6,7 @@
 // each pixel coordinate corresponds to a height and sun zenith angle
 // does NOT need to update when the sun changes its angle
 // need to be updated when the properties of the atmosphere changes
-const int mulScattSteps = 20;
+const int mulScattSteps = 2;
 const int sampleCountSqrt = 8;
 
 vec3 getSphericalDir(float theta, float phi) {
@@ -68,7 +68,7 @@ vec3 getMulScattValues(vec3 pos, vec3 sunDir) {
                             extinction);
 
         // transmittance in unit length, at current pos
-        vec3 transmittedOverDt = exp(-unitStep * extinction);
+        vec3 transmittedOverDt = exp(-stepLen * extinction);
         vec3 scatteredOrAbsorbedOverDt = 1.0 - transmittedOverDt;
 
         vec3 scatteredExtinction = rayleighScattering + mieScattering;

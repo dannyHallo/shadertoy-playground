@@ -4,7 +4,7 @@
 // each pixel coordinate corresponds to a height and sun zenith angle
 // does NOT need to update when the sun changes its angle
 // need to be updated when the properties of the atmosphere changes
-const float sunTransmittanceSteps = 40.0;
+const int sunTransmittanceSteps = 40;
 
 vec3 getSunTransmittance(vec3 pos, vec3 sunDir) {
   if (rayIntersectSphere(pos, sunDir, kGroundRadiusMm) > 0.0) {
@@ -15,9 +15,12 @@ vec3 getSunTransmittance(vec3 pos, vec3 sunDir) {
 
   // equation 2 from the paper
   vec3 sumOfExtinction = vec3(0.0);
-  float dt = atmoDist / sunTransmittanceSteps;
-  for (float i = 0.0; i < sunTransmittanceSteps; i += 1.0) {
-    vec3 marchedPos = pos + dt * (i + 0.5) * sunDir;
+
+  float stepLen = atmoDist / float(sunTransmittanceSteps);
+  vec3 unitStep = stepLen * sunDir;
+  vec3 marchedPos = pos - 0.5 * unitStep;
+  for (int stepI = 0; stepI < sunTransmittanceSteps; stepI += 1) {
+    marchedPos += unitStep;
 
     vec3 rayleighScattering, extinction;
     float mieScattering;
@@ -26,7 +29,7 @@ vec3 getSunTransmittance(vec3 pos, vec3 sunDir) {
 
     sumOfExtinction += extinction;
   }
-  return exp(-dt * sumOfExtinction);
+  return exp(-stepLn * sumOfExtinction);
 }
 
 void mainImage(out vec4 fragColor, vec2 fragCoord) {
