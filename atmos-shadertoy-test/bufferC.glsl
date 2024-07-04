@@ -8,40 +8,42 @@
 // near the horizon.
 const int numScatteringSteps = 32;
 vec3 raymarchScattering(vec3 pos, vec3 rayDir, vec3 sunDir, float tMax,
-                        float numSteps) {
+                        int numSteps) {
   float cosTheta = dot(rayDir, sunDir);
 
-  float miePhaseValue = getMiePhase(cosTheta);
-  float rayleighPhaseValue = getRayleighPhase(cosTheta);
+  float dRayleighPhaseVal = getRayleighPhase(cosTheta);
+  float dMiePhaseVal = getMiePhase(cosTheta);
 
   vec3 lum = vec3(0.0);
   vec3 transmittance = vec3(1.0);
   float t = 0.0;
-  for (float i = 0.0; i < numSteps; i += 1.0) {
-    float newT = ((i + 0.3) / numSteps) * tMax;
-    float dt = newT - t;
-    t = newT;
 
-    vec3 newPos = pos + t * rayDir;
+  float stepLen = tMax / float(numSteps);
+  vec3 unitStep = stepLen * rayDir;
+  vec3 marchedPos = pos - 0.5 * unitStep;
+  for (int stepI = 0; stepI < numSteps; stepI += 1) {
+    marchedPos += unitStep;
 
-    vec3 rayleighScattering, extinction;
+    vec3 rayleighScattering;
+    vec3 extinction;
     float mieScattering;
-    getScatteringValues(newPos, rayleighScattering, mieScattering, extinction);
+    getScatteringValues(marchedPos, rayleighScattering, mieScattering,
+                        extinction);
 
-    vec3 sampleTransmittance = exp(-dt * extinction);
+    vec3 sampleTransmittance = exp(-stepLen * extinction);
 
     vec3 sunTransmittance =
-        getValFromTLUT(iChannel0, iChannelResolution[0].xy, newPos, sunDir);
+        getValFromTLUT(iChannel0, iChannelResolution[0].xy, marchedPos, sunDir);
     vec3 psiMS = getValFromMultiScattLUT(iChannel1, iChannelResolution[1].xy,
-                                         newPos, sunDir);
+                                         marchedPos, sunDir);
 
     vec3 rayleighInScattering =
-        rayleighScattering * (rayleighPhaseValue * sunTransmittance + psiMS);
+        rayleighScattering * (dRayleighPhaseVal * sunTransmittance + psiMS);
     vec3 mieInScattering =
-        mieScattering * (miePhaseValue * sunTransmittance + psiMS);
+        mieScattering * (dMiePhaseVal * sunTransmittance + psiMS);
     vec3 inScattering = (rayleighInScattering + mieInScattering);
 
-    // Integrated scattering within path segment.
+    // integrated scattering within path segment
     vec3 scatteringIntegral =
         (inScattering - inScattering * sampleTransmittance) / extinction;
 
@@ -85,7 +87,7 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
                    : rayIntersectSphere(kCamPos, rayDir, kAtmosphereRadiusMm);
 
   vec3 sunDir = getSunDir(getSunAltitude(iMouse.x / iResolution.x));
-  vec3 lum = raymarchScattering(kCamPos, rayDir, sunDir, tMax,
-                                float(numScatteringSteps));
+  vec3 lum =
+      raymarchScattering(kCamPos, rayDir, sunDir, tMax, numScatteringSteps);
   fragColor = vec4(lum, 1.0);
 }

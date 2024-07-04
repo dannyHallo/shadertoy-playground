@@ -6,7 +6,7 @@
 // each pixel coordinate corresponds to a height and sun zenith angle
 // does NOT need to update when the sun changes its angle
 // need to be updated when the properties of the atmosphere changes
-const float mulScattSteps = 20.0;
+const int mulScattSteps = 20;
 const int sampleCountSqrt = 8;
 
 vec3 getSphericalDir(float theta, float phi) {
@@ -55,10 +55,9 @@ vec3 getMulScattValues(vec3 pos, vec3 sunDir) {
       vec3 dMsFac = vec3(0.0);
       vec3 dUpToDateTransmittance = vec3(1.0);
 
-      float dt = tMax / mulScattSteps;
-
-      for (float stepI = 0.0; stepI < mulScattSteps; stepI += 1.0) {
-        vec3 marchedPos = pos + dt * (stepI + 0.5) * rayDir;
+      float dt = tMax / float(mulScattSteps);
+      for (int stepI = 0; stepI < mulScattSteps; stepI += 1) {
+        vec3 marchedPos = pos + dt * (float(stepI) + 0.5) * rayDir;
 
         vec3 rayleighScattering;
         float mieScattering;
