@@ -55,9 +55,11 @@ vec3 getMulScattValues(vec3 pos, vec3 sunDir) {
       vec3 dMsFac = vec3(0.0);
       vec3 dUpToDateTransmittance = vec3(1.0);
 
-      float dt = tMax / float(mulScattSteps);
+      float stepLen = tMax / float(mulScattSteps);
+      vec3 unitStep = stepLen * rayDir;
+      vec3 marchedPos = pos - 0.5 * unitStep;
       for (int stepI = 0; stepI < mulScattSteps; stepI += 1) {
-        vec3 marchedPos = pos + dt * (float(stepI) + 0.5) * rayDir;
+        marchedPos += unitStep;
 
         vec3 rayleighScattering;
         float mieScattering;
@@ -66,12 +68,12 @@ vec3 getMulScattValues(vec3 pos, vec3 sunDir) {
                             extinction);
 
         // transmittance in unit length, at current pos
-        vec3 transmittedOverDt = exp(-dt * extinction);
+        vec3 transmittedOverDt = exp(-unitStep * extinction);
         vec3 scatteredOrAbsorbedOverDt = 1.0 - transmittedOverDt;
 
         vec3 scatteredExtinction = rayleighScattering + mieScattering;
         // calculates the overall proportion of light that's been scattered over
-        // dt, without considering phase (angle)
+        // unitStep, without considering phase (angle)
         vec3 scatteredOverDt =
             scatteredOrAbsorbedOverDt * (scatteredExtinction / extinction);
 
